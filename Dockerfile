@@ -140,22 +140,25 @@ RUN \
   mkdir build
 
 ARG ARCH
-ARG TARGET="${ARCH}-bottlerocket-linux-gnu"
-ARG SYSROOT="/${TARGET}/sys-root"
-ARG CFLAGS="-O2 -g -Wp,-D_GLIBCXX_ASSERTIONS -fstack-clash-protection"
-ARG CXXFLAGS="${CFLAGS}"
-ARG CPPFLAGS=""
+ARG GNU_TARGET="${ARCH}-bottlerocket-linux-gnu"
+ARG GNU_SYSROOT="/${GNU_TARGET}/sys-root"
+ARG GNU_CFLAGS="-O2 -g -Wp,-D_GLIBCXX_ASSERTIONS -fstack-clash-protection"
+ARG GNU_CXXFLAGS="${GNU_CFLAGS}"
+ARG GNU_CPPFLAGS=""
 ARG KVER="4.19"
 
 WORKDIR /home/builder/glibc/build
 RUN \
+  CFLAGS="${GNU_CFLAGS}" \
+  CXXFLAGS="${GNU_CXXFLAGS}" \
+  CPPFLAGS="${GNU_CPPFLAGS}" \
   ../configure \
-    --prefix="${SYSROOT}/usr" \
+    --prefix="${GNU_SYSROOT}/usr" \
     --sysconfdir="/etc" \
     --localstatedir="/var" \
-    --target="${TARGET}" \
-    --host="${TARGET}" \
-    --with-headers="/${SYSROOT}/usr/include" \
+    --target="${GNU_TARGET}" \
+    --host="${GNU_TARGET}" \
+    --with-headers="/${GNU_SYSROOT}/usr/include" \
     --enable-bind-now \
     --enable-kernel="${KVER}" \
     --enable-shared \
@@ -191,30 +194,32 @@ RUN \
   mv musl-${MUSLVER} musl
 
 ARG ARCH
-ARG TARGET="${ARCH}-bottlerocket-linux-musl"
-ARG SYSROOT="/${TARGET}/sys-root"
-ARG CFLAGS="-O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-clash-protection"
-ARG LDFLAGS="-Wl,-z,relro -Wl,-z,now"
+ARG MUSL_TARGET="${ARCH}-bottlerocket-linux-musl"
+ARG MUSL_SYSROOT="/${MUSL_TARGET}/sys-root"
+ARG MUSL_CFLAGS="-O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-clash-protection"
+ARG MUSL_LDFLAGS="-Wl,-z,relro -Wl,-z,now"
 
 WORKDIR /home/builder/musl
 RUN \
   ./configure \
-    CFLAGS="${CFLAGS}" \
-    LDFLAGS="${LDFLAGS}" \
-    --target="${TARGET}" \
+    CFLAGS="${MUSL_CFLAGS}" \
+    LDFLAGS="${MUSL_LDFLAGS}" \
+    --target="${MUSL_TARGET}" \
     --disable-gcc-wrapper \
     --enable-static \
-    --prefix="${SYSROOT}/usr" \
-    --libdir="${SYSROOT}/usr/lib" && \
+    --prefix="${MUSL_SYSROOT}/usr" \
+    --libdir="${MUSL_SYSROOT}/usr/lib" && \
    make -j$(nproc)
 
 USER root
 WORKDIR /home/builder/musl
 RUN make install
 RUN \
-  install -p -m 0644 -Dt ${SYSROOT}/usr/share/licenses/musl COPYRIGHT
+  install -p -m 0644 -Dt ${MUSL_SYSROOT}/usr/share/licenses/musl COPYRIGHT
 
 ARG LLVMVER="9.0.0"
+ARG MUSL_TARGET="${ARCH}-bottlerocket-linux-musl"
+ARG MUSL_SYSROOT="/${MUSL_TARGET}/sys-root"
 
 USER builder
 WORKDIR /home/builder
@@ -238,20 +243,20 @@ RUN \
     -DLIBUNWIND_ENABLE_SHARED=1 \
     -DLIBUNWIND_ENABLE_STATIC=1 \
     -DCMAKE_INSTALL_PREFIX="/usr" \
-    -DCMAKE_C_COMPILER="${TARGET}-gcc" \
-    -DCMAKE_C_COMPILER_TARGET="${TARGET}" \
-    -DCMAKE_CXX_COMPILER="${TARGET}-g++" \
-    -DCMAKE_CXX_COMPILER_TARGET="${TARGET}" \
-    -DCMAKE_AR="/usr/bin/${TARGET}-ar" \
-    -DCMAKE_RANLIB="/usr/bin/${TARGET}-ranlib" \
+    -DCMAKE_C_COMPILER="${MUSL_TARGET}-gcc" \
+    -DCMAKE_C_COMPILER_TARGET="${MUSL_TARGET}" \
+    -DCMAKE_CXX_COMPILER="${MUSL_TARGET}-g++" \
+    -DCMAKE_CXX_COMPILER_TARGET="${MUSL_TARGET}" \
+    -DCMAKE_AR="/usr/bin/${MUSL_TARGET}-ar" \
+    -DCMAKE_RANLIB="/usr/bin/${MUSL_TARGET}-ranlib" \
     .. && \
   make unwind
 
 USER root
 WORKDIR /home/builder/libunwind/build
-RUN make install-unwind DESTDIR="${SYSROOT}"
+RUN make install-unwind DESTDIR="${MUSL_SYSROOT}"
 RUN \
-  install -p -m 0644 -Dt ${SYSROOT}/usr/share/licenses/libunwind ../LICENSE.TXT
+  install -p -m 0644 -Dt ${MUSL_SYSROOT}/usr/share/licenses/libunwind ../LICENSE.TXT
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 

@@ -443,7 +443,7 @@ RUN \
 
 FROM sdk-libc as sdk-go
 
-ENV GOVER="1.21.5"
+ENV GOVER="1.21.7"
 
 USER root
 RUN dnf -y install golang

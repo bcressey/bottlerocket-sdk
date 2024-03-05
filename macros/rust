@@ -13,6 +13,7 @@
   -Copt-level=3 -Cdebuginfo=2 -Cforce-frame-pointers=yes \
   -Ctarget-cpu=%{_cross_arch_cpu_target} \
   -Clink-arg=-Wl,-z,relro,-z,now \
+  -Clink-arg=-Wl,-z,pack-relative-relocs \
   %{nil}}
 
 # Optimize generated code by using one codegen unit

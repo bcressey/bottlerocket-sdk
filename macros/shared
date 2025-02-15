@@ -11,13 +11,15 @@
   -Wp,-U_FORTIFY_SOURCE -Wp,-D_FORTIFY_SOURCE=2 \
   -Wp,-D_GLIBCXX_ASSERTIONS \
   -fexceptions -fstack-clash-protection -fno-semantic-interposition -fno-omit-frame-pointer \
+  -march=%{_cross_arch_cpu_march} \
   %{nil}}
 %_cross_c_args %{shrink: \
   '-O2', '-g', '-pipe', '-Wall', \
   '-Werror=format-security', '-Werror=strict-aliasing', \
   '-Wp,-U_FORTIFY_SOURCE', '-Wp,-D_FORTIFY_SOURCE=2', \
   '-Wp,-D_GLIBCXX_ASSERTIONS', \
-  '-fexceptions', '-fstack-clash-protection', '-fno-semantic-interposition', '-fno-omit-frame-pointer' \
+  '-fexceptions', '-fstack-clash-protection', '-fno-semantic-interposition', \
+  '-fno-omit-frame-pointer', '-march=%{_cross_arch_cpu_march}' \
   %{nil}}
 %_cross_cxxflags %_cross_cflags
 %_cross_ldflags -Wl,-z,relro -Wl,-z,now -Wl,-Bsymbolic-functions
@@ -226,6 +228,8 @@ CROSS_CMAKE_TOOLCHAIN_EOF\
   GOPATH="${PWD}/GOPATH" ; export GOPATH ; \
   GOOS="%{_cross_go_os}" ; export GOOS ; \
   GOARCH="%{_cross_go_arch}" ; export GOARCH ; \
+  GOAMD64="v2" ; export GOAMD64 ; \
+  GOARM64="v8.2" ; export GOARM64 ; \
   GOLIBC="%2" ; export GOLIBC ; \
   CC="%1-gcc" ; export CC ; \
   CC_FOR_TARGET="%1-gcc" ; export CC_FOR_TARGET ; \

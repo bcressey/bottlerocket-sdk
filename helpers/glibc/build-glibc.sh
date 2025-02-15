@@ -18,7 +18,13 @@ TARGET="${ARCH}-bottlerocket-linux-gnu"
 SYSROOT="/${TARGET}/sys-root"
 BUILDFLAGS="-O2 -g -Wp,-D_GLIBCXX_ASSERTIONS -fstack-clash-protection -fno-omit-frame-pointer"
 
+case "${ARCH}" in
+  x86_64) ARCHFLAGS="-march=x86-64-v2" ;;
+  aarch64) ARCHFLAGS="-march=armv8.2-a" ;;
+esac
+
 cd "${HOME}/glibc/build"
+CC="${TARGET}-gcc ${ARCHFLAGS}" CXX="${TARGET}-g++ ${ARCHFLAGS}" \
 CFLAGS="${BUILDFLAGS}" CPPFLAGS="" CXXFLAGS="${BUILDFLAGS}" \
 ../configure \
   --prefix="${SYSROOT}/usr" \

@@ -1,4 +1,7 @@
 %_cross_arch aarch64
+%_cross_arch_cpu_march armv8.2-a
+%_cross_arch_cpu_target neoverse-n1
+
 %_cross_karch arm64
 %_cross_kimage Image
 %_cross_cpu_family arm

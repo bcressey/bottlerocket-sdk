@@ -17,6 +17,11 @@ SYSROOT="/${TARGET}/sys-root"
 CFLAGS="-O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-clash-protection -fno-omit-frame-pointer"
 LDFLAGS="-Wl,-z,relro -Wl,-z,now"
 
+case "${ARCH}" in
+  x86_64) CFLAGS+=" -march=x86-64-v2" ;;
+  aarch64) CFLAGS+=" -march=armv8.2-a" ;;
+esac
+
 cd "${HOME}/musl"
 ./configure \
   CFLAGS="${CFLAGS}" \

@@ -82,8 +82,8 @@ RUN \
   git config --global user.email "builder@localhost"
 
 ARG UPSTREAM_SOURCE_FALLBACK
-ENV BRVER="2024.02.8"
-ENV KVER="5.10.228"
+ENV BRVER="2024.11.1"
+ENV KVER="5.10.232"
 
 WORKDIR /home/builder
 COPY ./hashes/buildroot ./hashes
@@ -92,7 +92,8 @@ RUN \
   tar xf buildroot-${BRVER}.tar.xz && \
   rm buildroot-${BRVER}.tar.xz && \
   mv buildroot-${BRVER} buildroot && \
-  mv queue.h queue.h?rev=1.70
+  mkdir musl-compat-headers && \
+  mv queue.h musl-compat-headers
 
 WORKDIR /home/builder/buildroot
 COPY ./patches/buildroot/* ./
@@ -133,7 +134,7 @@ FROM base AS sdk
 USER root
 
 ARG UPSTREAM_SOURCE_FALLBACK
-ENV KVER="5.10.228"
+ENV KVER="5.10.232"
 
 WORKDIR /
 
@@ -183,8 +184,8 @@ WORKDIR /home/builder
 COPY ./hashes/glibc ./hashes
 COPY ./helpers/glibc/* ./
 
-ENV GLIBCVER="2.38"
-ENV KVER="5.10.228"
+ENV GLIBCVER="2.40"
+ENV KVER="5.10.232"
 RUN \
   sdk-fetch hashes && \
   tar xf glibc-${GLIBCVER}.tar.xz && \
@@ -214,7 +215,7 @@ WORKDIR /home/builder
 COPY ./hashes/musl ./hashes
 COPY ./helpers/musl/* ./
 
-ENV MUSLVER="1.2.4"
+ENV MUSLVER="1.2.5"
 RUN \
   sdk-fetch hashes && \
   tar xf musl-${MUSLVER}.tar.gz && \
@@ -408,6 +409,11 @@ ENV TARGET_NM="${TARGET}-nm"
 ENV TARGET_OBJCOPY="${TARGET}-objcopy"
 ENV TARGET_STRIP="${TARGET}-strip"
 
+# Disable warnings that are included in -Wall in GCC 13 and 14, which cause the
+# older GRUB source to fail to build. Note that these only affect the target build,
+# which is not used anywhere.
+ENV TARGET_CFLAGS="-Wno-array-bounds -Wno-array-parameter -Wno-incompatible-pointer-types"
+
 RUN \
   ./configure \
     --host="${HOST_ARCH}-redhat-linux" \
@@ -429,7 +435,7 @@ FROM sdk AS sdk-bootconfig
 
 USER root
 
-ENV KVER="5.10.228"
+ENV KVER="5.10.232"
 
 RUN \
   mkdir -p /usr/libexec/tools /usr/share/licenses/bootconfig && \

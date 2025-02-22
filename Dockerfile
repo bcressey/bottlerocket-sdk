@@ -504,7 +504,7 @@ ENV GO111MODULE="auto"
 ENV AWS_LC_FIPS_VER="3.0.0"
 
 USER root
-RUN dnf -y install golang
+RUN dnf -y install golang clang
 
 ENV GO123VER="1.23.6"
 ENV GO122VER="1.22.12"

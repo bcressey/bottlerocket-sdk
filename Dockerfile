@@ -276,8 +276,8 @@ FROM sdk-libc AS sdk-rust
 
 USER root
 RUN \
-  mkdir -p /usr/libexec/rust && \
-  chown -R builder:builder /usr/libexec/rust
+  mkdir -p /usr/libexec/{rust,llvm} && \
+  chown -R builder:builder /usr/libexec/{rust,llvm}
 
 ARG HOST_ARCH
 ENV VENDOR="bottlerocket"
@@ -330,7 +330,10 @@ COPY ./configs/rust/targets ./targets
 COPY ./configs/rust/config.toml.in ./
 RUN \
   sed -e "s,@HOST_TRIPLE@,${HOST_ARCH}-unknown-linux-gnu,g" config.toml.in > config.toml && \
-  RUSTUP_DIST_SERVER=example:// RUST_TARGET_PATH=${PWD}/targets python3 ./x.py install && \
+  RUSTUP_DIST_SERVER=example:// RUST_TARGET_PATH=${PWD}/targets python3 ./x.py install
+
+# Copy target configs into the installed Rust environment.
+RUN \
   for arch in x86_64 aarch64 ; do \
     for libc in gnu musl ; do \
       cp \
@@ -338,6 +341,11 @@ RUN \
         /usr/libexec/rust/lib/rustlib/${arch}-bottlerocket-linux-${libc}/target.json ; \
     done ; \
   done
+
+# Copy out the LLVM toolchain that was built along with Rust.
+RUN \
+  rm -rf "build/${HOST_ARCH}-unknown-linux-gnu/llvm/build" && \
+  rsync -aq "build/${HOST_ARCH}-unknown-linux-gnu/llvm/" /usr/libexec/llvm/
 
 RUN \
   install -p -m 0644 -Dt licenses COPYRIGHT LICENSE-*
@@ -921,7 +929,6 @@ USER root
 RUN \
   dnf -y install --setopt=install_weak_deps=False \
     ccache \
-    clang \
     createrepo_c \
     dosfstools \
     e2fsprogs \
@@ -1084,11 +1091,15 @@ COPY --from=sdk-libc-musl / /
 # "sdk-libc-gnu" has the GNU C library and headers.
 COPY --from=sdk-libc-gnu / /
 
-# "sdk-rust" has our Rust toolchain with the required targets.
+# "sdk-rust" has our Rust and LLVM toolchains with the required targets.
 COPY --chown=0:0 --from=sdk-rust /usr/libexec/rust/ /usr/libexec/rust/
 COPY --chown=0:0 --from=sdk-rust \
   /home/builder/rust/licenses/ \
   /usr/share/licenses/rust/
+
+# Copy the LLVM install directly to `/usr`, so clang can auto-discover the
+# GCC target toolchains.
+COPY --chown=0:0 --from=sdk-rust /usr/libexec/llvm/ /usr/
 
 # "sdk-go" has the Go toolchain and standard library builds.
 COPY --chown=0:0 --from=sdk-go-1.23 /home/builder/sdk-go/bin /usr/libexec/go-1.23/bin/

@@ -1,0 +1,42 @@
+From 0c45af68edee0ebaef7bb4cb0a4c9fb78c776738 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 2 Sep 2025 04:53:45 +0000
+Subject: [PATCH] package/binutils: build with zstd
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ package/binutils/binutils.mk | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/package/binutils/binutils.mk b/package/binutils/binutils.mk
+index 83e7d63c42..91b2df91ea 100644
+--- a/package/binutils/binutils.mk
++++ b/package/binutils/binutils.mk
+@@ -34,6 +34,9 @@ BINUTILS_CPE_ID_VENDOR = gnu
+ # 0003-objdump-memleak.patch
+ BINUTILS_IGNORE_CVES += CVE-2025-3198
+ 
++HOST_BINUTILS_DEPENDENCIES += host-zstd host-pkgconf
++HOST_BINUTILS_MAKE_OPTS += ZSTD_LIBS="-l:libzstd.a"
++
+ ifeq ($(BINUTILS_FROM_GIT),y)
+ BINUTILS_DEPENDENCIES += host-flex host-bison
+ HOST_BINUTILS_DEPENDENCIES += host-flex host-bison
+@@ -58,7 +61,7 @@ BINUTILS_CONF_OPTS = \
+ 	--disable-gprofng \
+ 	$(BINUTILS_DISABLE_GDB_CONF_OPTS) \
+ 	$(BINUTILS_EXTRA_CONFIG_OPTIONS) \
+-	--without-zstd
++	--with-zstd
+ 
+ ifeq ($(BR2_STATIC_LIBS),y)
+ BINUTILS_CONF_OPTS += --disable-plugins
+@@ -95,7 +98,7 @@ HOST_BINUTILS_CONF_OPTS = \
+ 	--enable-lto \
+ 	$(BINUTILS_DISABLE_GDB_CONF_OPTS) \
+ 	$(BINUTILS_EXTRA_CONFIG_OPTIONS) \
+-	--without-zstd
++	--with-zstd
+ 
+ ifeq ($(BR2_BINUTILS_GPROFNG),y)
+ HOST_BINUTILS_DEPENDENCIES += host-bison
